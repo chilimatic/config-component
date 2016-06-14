@@ -21,6 +21,7 @@ class File extends AbstractConfig
      * @var string
      */
     const CONFIG_PATH_INDEX = 'config_path';
+    const HIERARCHY_PLACEHOLDER_INDEX = 'hierarchy_placeholder';
 
     /**
      * extension for config files
@@ -56,10 +57,16 @@ class File extends AbstractConfig
             }
         }
 
+        if (!$this->get(self::HIERARCHY_PLACEHOLDER_INDEX)) {
+            $this->set(self::HIERARCHY_PLACEHOLDER_INDEX, self::HIERARCHY_PLACEHOLDER);
+        }
+
+
         // get the path of the config if the path has not been set
         if (!($this->config_path = $this->get(self::CONFIG_PATH_INDEX))) {
             throw new ExceptionConfig('no path for configfiles has been set');
         }
+
 
         $this->_initHostId();
 
@@ -114,6 +121,7 @@ class File extends AbstractConfig
         // default config for all of them
         $_config_set = array();
         $host_id     = $this->get('host_id');
+        $hierarchy_placeholder = $this->get(self::HIERARCHY_PLACEHOLDER_INDEX);
 
         /**
          * if there's a specific port remove the port
@@ -128,7 +136,7 @@ class File extends AbstractConfig
         // split up the server host_id to an array
         $id_part_list = (array)explode(self::CONFIG_DELIMITER, $host_id);
         if (count($id_part_list) < 3) {
-            array_unshift($id_part_list, self::HIERARCHY_PLACEHOLDER);
+            array_unshift($id_part_list, $hierarchy_placeholder);
         }
 
         // add an extra iteration so there is a specific config for a subdomain
@@ -138,7 +146,7 @@ class File extends AbstractConfig
 
 
         // we don't need to rebuild this standard strings all the time
-        $config_del = self::HIERARCHY_PLACEHOLDER . ( string )self::CONFIG_DELIMITER;
+        $config_del = $hierarchy_placeholder . ( string )self::CONFIG_DELIMITER;
         $extension  = self::CONFIG_DELIMITER . self::FILE_EXTENSION;
 
         // the first config is the current host id + .cfg
@@ -168,13 +176,13 @@ class File extends AbstractConfig
          *
          * @return int
          */
-        uasort($_config_set, function ($a, $b) {
+        uasort($_config_set, function ($a, $b) use ($hierarchy_placeholder) {
             // include to the normal namespace
 
             if (substr_count($a, self::CONFIG_DELIMITER) === substr_count($b, self::CONFIG_DELIMITER)) {
-                if (strpos($a, self::HIERARCHY_PLACEHOLDER) === true && strpos($b, self::HIERARCHY_PLACEHOLDER) === false) {
+                if (strpos($a, $hierarchy_placeholder) === true && strpos($b, $hierarchy_placeholder) === false) {
                     return -1;
-                } elseif (strpos($a, self::HIERARCHY_PLACEHOLDER) == false && strpos($b, self::HIERARCHY_PLACEHOLDER) == true) {
+                } elseif (strpos($a, $hierarchy_placeholder) == false && strpos($b, $hierarchy_placeholder) == true) {
                     return 1;
                 }
 
@@ -205,12 +213,14 @@ class File extends AbstractConfig
         if (count((array) $configSet) > 0) {
             return true;
         }
+        $hierarchy_placeholder = $this->get(self::HIERARCHY_PLACEHOLDER_INDEX);
+
 
         // if the config set already exists don't parse it
         if (empty($configSet) && !($configSet = $this->_getConfigSet())) {
             // set default config set for the default execution
             $configSet = [
-                realpath("{$this->config_path}/" . (string)self::HIERARCHY_PLACEHOLDER . (string)self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION)
+                realpath("{$this->config_path}/" . (string)$hierarchy_placeholder . (string)self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION)
             ];
             $this->set('config_set', $configSet);
         }
@@ -220,7 +230,7 @@ class File extends AbstractConfig
          */
         try {
             if (empty($configSet) || !is_readable($configSet[0])) {
-                throw new ExceptionConfig("No default config file declared {$this->config_path}/" . self::HIERARCHY_PLACEHOLDER . (string)self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION);
+                throw new ExceptionConfig("No default config file declared {$this->config_path}/" . $hierarchy_placeholder . (string)self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION);
             }
 
             $configParser = new Parser();
