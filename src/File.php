@@ -180,16 +180,16 @@ class File extends AbstractConfig
             // include to the normal namespace
 
             if (substr_count($a, self::CONFIG_DELIMITER) === substr_count($b, self::CONFIG_DELIMITER)) {
-                if (strpos($a, $hierarchy_placeholder) === true && strpos($b, $hierarchy_placeholder) === false) {
+                if (strpos($a, $hierarchy_placeholder) !== false && strpos($b, $hierarchy_placeholder) === false) {
                     return -1;
-                } elseif (strpos($a, $hierarchy_placeholder) == false && strpos($b, $hierarchy_placeholder) == true) {
+                } elseif (strpos($a, $hierarchy_placeholder) === false && strpos($b, $hierarchy_placeholder) !== false) {
                     return 1;
                 }
 
                 return 0;
             }
 
-            return (substr_count($a, self::CONFIG_DELIMITER) > substr_count($b, self::CONFIG_DELIMITER) ? -1 : 1);
+            return (substr_count($a, self::CONFIG_DELIMITER) > substr_count($b, self::CONFIG_DELIMITER) ? 1 : -1);
         });
 
         return $_config_set;
