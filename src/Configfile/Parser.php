@@ -55,7 +55,7 @@ class Parser
      *
      * @return bool
      */
-    private function isComment($line)
+    private function isComment($line) : bool
     {
         // if it's an empty line you might as well skip it
         if (empty($line)) {
@@ -82,7 +82,7 @@ class Parser
      *
      * @return Node
      */
-    public function parse(array $currentConfig, Node $Node)
+    public function parse(array $currentConfig, Node $Node) : Node
     {
         $currentComment = '';
 

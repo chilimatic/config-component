@@ -29,6 +29,17 @@ class ConfigCollectionTest extends PHPUnit_Framework_TestCase {
      */
     public function testGraphCollectionAddNode() {
         $collection = new chilimatic\lib\Config\Collection();
+        $collection->addNode(new \chilimatic\lib\Config\Node(null, '', null));
+
+        self::assertEquals(1, $collection->count());
+    }
+
+    /**
+     * @test
+     * @expectedException TypeError
+     */
+    public function testGraphCollectionAddNodeWithInvalidKeyParam() {
+        $collection = new chilimatic\lib\Config\Collection();
         $collection->addNode(new \chilimatic\lib\Config\Node(null, null, null));
 
         self::assertEquals(1, $collection->count());
@@ -38,7 +49,7 @@ class ConfigCollectionTest extends PHPUnit_Framework_TestCase {
      * @test
      */
     public function testGraphCollectionAddAndRemoveNode() {
-        $node = new \chilimatic\lib\Config\Node(null, null, null);
+        $node = new \chilimatic\lib\Config\Node(null, '', null);
         $collection = new chilimatic\lib\Config\Collection();
         $collection->addNode($node);
 

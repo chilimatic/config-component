@@ -64,6 +64,21 @@ class ConfigFactory_Test extends PHPUnit_Framework_TestCase
     public function catchLogicExceptionNoType()
     {
         \chilimatic\lib\Config\ConfigFactory::make(
+            '',
+            [
+                \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => __DIR__
+            ]
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @expectedException TypeError
+     */
+    public function catchTypeErrorWrongTypeParam()
+    {
+        \chilimatic\lib\Config\ConfigFactory::make(
             null,
             [
                 \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => __DIR__

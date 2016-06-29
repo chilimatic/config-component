@@ -30,7 +30,7 @@ class ConfigFactory
      *
      * @return AbstractConfig
      */
-    public static function make($type, $param = null)
+    public static function make(string $type, $param = null) : AbstractConfig
     {
         if (!$type) {
             throw new \LogicException("The Config Type has to be specified ... \$type is empty");

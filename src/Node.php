@@ -25,7 +25,7 @@ class Node extends GraphNode
      *
      * @var mixed
      */
-    protected $comment = null;
+    protected $comment = '';
 
     /**
      * constructor
@@ -35,7 +35,7 @@ class Node extends GraphNode
      * @param $data
      * @param string $comment
      */
-    public function __construct(INode $parentNode = null, $key, $data, $comment = '')
+    public function __construct(INode $parentNode = null,string $key, $data,string $comment = '')
     {
         // get the current node
         $this->parentNode = $parentNode;
@@ -67,7 +67,7 @@ class Node extends GraphNode
      *
      * @return bool
      */
-    private function initType($data)
+    private function initType($data) : bool
     {
         if (!is_string($data)) {
             return false;
@@ -106,7 +106,7 @@ class Node extends GraphNode
     /**
      * @param string $comment
      */
-    public function setComment($comment)
+    public function setComment(string $comment)
     {
         $this->comment = $comment;
     }
@@ -114,7 +114,7 @@ class Node extends GraphNode
     /**
      * @return string
      */
-    public function getComment()
+    public function getComment() : string
     {
         return $this->comment;
     }
@@ -122,7 +122,7 @@ class Node extends GraphNode
     /**
      * @return string
      */
-    public function __toString()
+    public function __toString() : string
     {
         return (string) (is_scalar($this->getData()) ? $this->getData() : json_encode($this->getData()));
     }

@@ -91,7 +91,7 @@ class Ini extends AbstractConfig
      *
      * @return mixed
      */
-    public function delete($id = "")
+    public function delete(string $id = "")
     {
         //@todo think of implementation
     }
@@ -105,7 +105,7 @@ class Ini extends AbstractConfig
      *
      * @return mixed
      */
-    function saveConfig(Node $node = null)
+    public function saveConfig(Node $node = null)
     {
     }
 }

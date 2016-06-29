@@ -69,7 +69,7 @@ abstract class AbstractConfig implements IConfig
      *
      * @return mixed
      */
-    public function delete($key = '')
+    public function delete(string $key = '') : bool
     {
         $nodeList = $this->mainNode->getByKey($key);
         if (empty($nodeList)) {
@@ -90,7 +90,7 @@ abstract class AbstractConfig implements IConfig
      *
      * @return bool
      */
-    public function deleteById($id = '')
+    public function deleteById(string $id = '') : bool
     {
         $node = $this->mainNode->getById($id);
 
@@ -108,7 +108,7 @@ abstract class AbstractConfig implements IConfig
      *
      * @return mixed
      */
-    public function get($var)
+    public function get(string $var)
     {
         if (!$this->mainNode) {
             return null;
@@ -130,7 +130,7 @@ abstract class AbstractConfig implements IConfig
      * @internal param $var
      * @return mixed
      */
-    public function getById($id)
+    public function getById(string $id)
     {
         $node = $this->mainNode->getById($id);
         if ($node === null) {
@@ -148,7 +148,7 @@ abstract class AbstractConfig implements IConfig
      *
      * @return mixed
      */
-    public function setById($id, $val)
+    public function setById(string $id, $val)
     {
         // set the variable
         if (empty($id)) {
@@ -171,7 +171,7 @@ abstract class AbstractConfig implements IConfig
      *
      * @return mixed
      */
-    public function set($key, $val)
+    public function set(string $key, $val)
     {
         // set the variable
         if (empty($key)) {

@@ -293,7 +293,7 @@ class File extends AbstractConfig
      *
      * @return bool
      */
-    public function saveConfig(Node $node = null)
+    public function saveConfig(Node $node = null) : bool
     {
         if (null === $node) {
             return $this->saveNode($node);

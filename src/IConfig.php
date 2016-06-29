@@ -74,7 +74,7 @@ Interface IConfig
      *
      * @return bool
      */
-    public function delete($key = '');
+    public function delete(string $key = '');
 
     /**
      * gets a specific parameter
@@ -83,7 +83,7 @@ Interface IConfig
      *
      * @return mixed
      */
-    public function get($key);
+    public function get(string $key);
 
 
     /**
@@ -93,7 +93,7 @@ Interface IConfig
      *
      * @return mixed
      */
-    public function getbyId($id);
+    public function getbyId(string $id);
 
     /**
      * gets a specific parameter
@@ -103,7 +103,7 @@ Interface IConfig
      *
      * @return mixed
      */
-    public function setById($id, $val);
+    public function setById(string $id, $val);
 
     /**
      * sets a specific parameter
@@ -113,7 +113,7 @@ Interface IConfig
      *
      * @return mixed
      */
-    public function set($key, $val);
+    public function set(string $key, $val);
 
     /**
      * saves the specified config

@@ -71,7 +71,7 @@ class Config implements ISingelton
      *
      * @return mixed
      */
-    public static function get($var)
+    public static function get(string $var)
     {
         return self::$instance->get($var);
     }
@@ -83,7 +83,7 @@ class Config implements ISingelton
      *
      * @return mixed
      */
-    public static function getById($id)
+    public static function getById(string $id)
     {
         return self::$instance->getById($id);
     }
@@ -96,7 +96,7 @@ class Config implements ISingelton
      *
      * @return mixed
      */
-    public static function set($key, $value)
+    public static function set(string $key, $value)
     {
         return self::$instance->set($key, $value);
     }
@@ -106,7 +106,7 @@ class Config implements ISingelton
      *
      * @return mixed
      */
-    public static function delete($key)
+    public static function delete(string $key)
     {
         return self::$instance->delete($key);
     }
@@ -118,7 +118,7 @@ class Config implements ISingelton
      *
      * @return mixed
      */
-    public static function loadModule($module_name = '')
+    public static function loadModule(string $module_name = '')
     {
         return self::$instance->loadModule($module_name);
     }

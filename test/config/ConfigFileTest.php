@@ -38,10 +38,8 @@ class ConfigFile_Test extends PHPUnit_Framework_TestCase
         );
     }
 
-    /**
-     * @after
-     */
-    public function deleteConfigs()
+
+    public static function tearDownAfterClass()
     {
         unlink(self::$testDataDir . '/*.cfg');
         unlink(self::$testDataDir . '/*.test.com.cfg');
