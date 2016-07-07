@@ -19,6 +19,8 @@ use chilimatic\lib\Datastructure\Graph\Node as GraphNode;
  */
 class Node extends GraphNode
 {
+    const SERIALIZE_PATTERN = '/^(O:\d+|a:\d+|i:\d+|s:\d+|b:\d+|d:\d+)/';
+
     /**
      * Config Node if loaded
      * can be mixed since it should dynamic
@@ -81,7 +83,7 @@ class Node extends GraphNode
             case !is_numeric($data):
                 if ($res = json_decode($data)) {
                     $this->data = $res;
-                } else if (($res = @unserialize($data)) !== false) {
+                } else if (preg_match(self::SERIALIZE_PATTERN, $data) &&  ($res = @unserialize($data)) !== false) {
                     $this->data = $res;
                 } else if ((preg_match('/^["|\']{1}(.*)["|\']{1}$/', $data, $match)) === 1) {
                     $this->data = (string)$match[1];

@@ -3,7 +3,7 @@
   "description": "config component within the chilimatic framework",
   "type": "library",
   "license": "MIT",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "authors": [
     {
       "name": "Jakob Oberhummer",
