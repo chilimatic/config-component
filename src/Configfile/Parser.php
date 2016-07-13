@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  *
  * @author j
@@ -8,9 +9,9 @@
  * File: parser.class.php
  */
 
-namespace chilimatic\lib\Config\Configfile;
 
-use chilimatic\lib\Config\Node;
+namespace chilimatic\lib\Config\Configfile;
+use chilimatic\lib\config\Node;
 
 /**
  * Class Parser
@@ -25,28 +26,20 @@ class Parser
      * separated by ,
      * -> list is exploded in the constructor
      *
-     * @var string
-     */
-    const COMMENT_CHARACTER_LIST = '#,//';
-
-    /**
-     * an array of characters that if they are at the
-     * start of a string indicate it'S a comment and should not be added to the
-     * Config object
-     *
      * @var array
      */
-    private $_comment_character_list = array();
+    const COMMENT_CHARACTER_LIST = ['#','//'];
 
-    /**
-     *
-     */
-    public function __construct()
-    {
-        // set the default comment characters
-        $this->_comment_character_list = explode(',', self::COMMENT_CHARACTER_LIST);
-    }
+    const DATA_SET_INDEX = 'data';
+    const KEY_SET_INDEX = 'key';
+    const COMMENT_SET_INDEX = 'comment';
 
+
+    const PATTERN_KEY_VALUE_MATCH = '/^[\s]*([a-zA-Z\_\-\.]+)?[\s]*[=][\s]*(.*)$/';
+    const PATTERN_SERIALIZE = '/^(O:\d+|a:\d+|i:\d+|s:\d+|b:\d+|d:\d+)/';
+    const PATTERN_STRIP_QUOTES = '/^["|\']{1}(.*)["|\']{1}$/';
+
+    private static $nodeTemplate;
 
     /**
      * checks if it's a comment in the config
@@ -55,42 +48,31 @@ class Parser
      *
      * @return bool
      */
-    private function isComment($line) : bool
+    private static function isComment($line) : bool
     {
         // if it's an empty line you might as well skip it
         if (empty($line)) {
             return true;
         }
 
-        $is_comment = false;
-
-        foreach ($this->_comment_character_list as $comment_char) {
-            $line = trim($line);
-            $res = strpos($line, $comment_char);
-            if (false !== $res && $res <= 3) {
-                $is_comment = true;
-                break;
-            }
-        }
-
-        return $is_comment;
+        return (bool) preg_match('/^[\s]*([\/]{2}|#{1})/i', $line);
     }
 
     /**
      * @param array $currentConfig
-     * @param Node $Node
      *
-     * @return Node
+     * @return \SplQueue
      */
-    public function parse(array $currentConfig, Node $Node) : Node
+    public static function parse(array $currentConfig) : \SplQueue
     {
         $currentComment = '';
 
+        $queue = new \SplQueue();
         // loop through all lines
         for ($i = 0, $count = (int)count($currentConfig); $i < $count; $i++) {
             if (!$currentConfig[$i]) {
                 continue;
-            } elseif ($this->isComment($currentConfig[$i])) {
+            } elseif (self::isComment($currentConfig[$i])) {
                 $currentComment .= $currentConfig[$i];
                 continue;
             }
@@ -99,17 +81,91 @@ class Parser
                 continue;
             }
 
-            $match = explode('=', $currentConfig[$i]);
+            preg_match(
+                self::PATTERN_KEY_VALUE_MATCH,
+                $currentConfig[$i],
+                $keyValueMatch
+            );
 
-            if ($match) {
-                // append the child;
-                $Node->addChild(new Node($Node, strtolower(trim($match[0])), trim($match [1]), $currentComment));
+
+            if ($keyValueMatch) {
+                $queue->enqueue(
+                    [
+                        self::KEY_SET_INDEX     => $keyValueMatch[1],
+                        self::DATA_SET_INDEX    => $keyValueMatch[2],
+                        self::COMMENT_SET_INDEX => $currentComment
+                    ]
+                );
                 // clear the comment
                 $currentComment = '';
             }
         }
 
-        return $Node;
+        return $queue;
+    }
+
+    /**
+     * method to set the current type and initializes it
+     *
+     * @param $data
+     *
+     * @return mixed
+     */
+    private static function initType($data)
+    {
+        if (!is_string($data)) {
+            return false;
+        }
+
+        $data = trim($data);
+        switch (true) {
+            case (in_array($data, ['true', 'false'], false)):
+                return (bool)(strpos($data, 'true') !== false) ? true : false;
+                break;
+            case !is_numeric($data):
+                if ($res = json_decode($data)) {
+                    return $res;
+                } else if (preg_match(self::PATTERN_SERIALIZE, $data) &&  ($res = @unserialize($data)) !== false) {
+                    return $res;
+                } else if ((preg_match(self::PATTERN_STRIP_QUOTES, $data, $match)) === 1) {
+                    return (string) $match[1];
+                } else {
+                    return (string)$data;
+                }
+                break;
+        }
+
+        if (is_numeric($data) && strpos($data, '.') === false) {
+            return (int)$data;
+        } else {
+            return (float)$data;
+        }
+    }
+
+
+    /**
+     * @param Node $node
+     * @param \SplQueue $queue
+     * @return Node
+     */
+    public static function appendToNode(Node $node, \SplQueue $queue) : Node
+    {
+        if (!self::$nodeTemplate) {
+            self::$nodeTemplate = new Node(null, '', null);
+        }
+
+        foreach ($queue as $set) {
+            $childNode = clone self::$nodeTemplate;
+            $childNode
+                ->setKey($set['key'])
+                ->setData(self::initType($set['data']))
+                ->setParent($node)
+                ->setComment($set['comment'])
+            ;
+            $node->addChild($childNode);
+        }
+
+        return $node;
     }
 
 }

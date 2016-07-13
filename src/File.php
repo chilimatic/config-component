@@ -1,11 +1,5 @@
 <?php
-/**
- * Created by JetBrains PhpStorm.
- * User: j
- * Date: 26.10.13
- * Time: 17:53
- *
- */
+declare(strict_types=1);
 
 namespace chilimatic\lib\Config;
 use chilimatic\lib\Config\Configfile\Parser;
@@ -23,6 +17,8 @@ class File extends AbstractConfig
     const CONFIG_PATH_INDEX = 'config_path';
     const HIERARCHY_PLACEHOLDER_INDEX = 'hierarchy_placeholder';
 
+    const HOST_ID_KEY = 'host_id';
+
     /**
      * extension for config files
      *
@@ -36,6 +32,11 @@ class File extends AbstractConfig
      */
     private $config_path;
 
+    /**
+     * @var Node
+     */
+    private $nodeTemplate;
+
 
     /**
      * @param array $param
@@ -45,14 +46,21 @@ class File extends AbstractConfig
      */
     public function __construct($param = null)
     {
+        $this->nodeTemplate = new Node(null, '', null);
+
         // set the main node on which all other nodes should be appended
-        $this->mainNode = new Node(null, self::MAIN_NODE_KEY, null);
+        $this->mainNode = clone $this->nodeTemplate;;
+        $this->mainNode->setKey(self::MAIN_NODE_KEY);
 
         // add custom parameters
         if (is_array($param)) {
             // set the given parameters
             foreach ($param as $key => $value) {
-                $node = new Node($this->mainNode, $key, $value, self::INIT_PARAMETER);
+                $node = clone $this->nodeTemplate;
+                $node->setKey($key)
+                    ->setData($value)
+                    ->setComment(self::INIT_PARAMETER);
+
                 $this->mainNode->addChild($node);
             }
         }
@@ -61,15 +69,12 @@ class File extends AbstractConfig
             $this->set(self::HIERARCHY_PLACEHOLDER_INDEX, self::HIERARCHY_PLACEHOLDER);
         }
 
-
         // get the path of the config if the path has not been set
         if (!($this->config_path = $this->get(self::CONFIG_PATH_INDEX))) {
             throw new ExceptionConfig('no path for configfiles has been set');
         }
 
-
         $this->_initHostId();
-
         $this->load($param);
     }
 
@@ -83,10 +88,14 @@ class File extends AbstractConfig
         if ($this->get('host_id')) {
             return;
         }
-
+        $node = clone $this->nodeTemplate;
         // if an apache is running use the http host of it
         if (!empty($_SERVER ['HTTP_HOST'])) {
-            $this->mainNode->addChild(new Node($this->mainNode, 'host_id', $_SERVER ['HTTP_HOST']));
+
+            $node->setKey(self::HOST_ID_KEY)->setParent($this->mainNode)->setData($_SERVER ['HTTP_HOST']);
+            $this->mainNode->addChild(
+                $node
+            );
         } // else check if there are console parameters
         else {
             // split them via spaces
@@ -97,7 +106,10 @@ class File extends AbstractConfig
                 // split the input into a key value pair
                 $inp = (array)explode(IConfig::CLI_COMMAND_DELIMITER, $param);
                 if (strtolower(trim($inp[0])) == IConfig::CLI_HOST_VARIABLE) {
-                    $this->mainNode->addChild(new Node($this->mainNode, 'host_id', (string)trim($inp[1])));
+                    $node
+                        ->setKey(self::HOST_ID_KEY)
+                        ->setParent($this->mainNode)
+                        ->setData(trim((string)$inp[1]));
                     break;
                 }
             }
@@ -111,7 +123,7 @@ class File extends AbstractConfig
      *
      * @return array
      */
-    protected function _getConfigSet()
+    protected function _getConfigSet() : array
     {
 
         if (empty($_SERVER) && empty($GLOBALS['argv'])) {
@@ -119,9 +131,9 @@ class File extends AbstractConfig
         }
 
         // default config for all of them
-        $_config_set = array();
-        $host_id     = $this->get('host_id');
-        $hierarchy_placeholder = $this->get(self::HIERARCHY_PLACEHOLDER_INDEX);
+        $_config_set            = [];
+        $host_id                = $this->get(self::HOST_ID_KEY);
+        $hierarchy_placeholder  = $this->get(self::HIERARCHY_PLACEHOLDER_INDEX);
 
         /**
          * if there's a specific port remove the port
@@ -129,15 +141,20 @@ class File extends AbstractConfig
          * @todo keep in mind that maybe someone needs a port specific behaviour for his app
          */
         if (($pos = strpos((string)$host_id, ':')) !== false) {
-            $this->mainNode->addChild(new Node($this->mainNode, 'host_id', ( string )substr($host_id, 0, $pos)));
+            $node = clone $this->nodeTemplate;
+            $node
+                ->setKey(self::HOST_ID_KEY)
+                ->setParent($this->mainNode)
+                ->setData((string) substr($host_id, 0, $pos));
         }
 
-
         // split up the server host_id to an array
-        $id_part_list = (array)explode(self::CONFIG_DELIMITER, $host_id);
+        $id_part_list = (array) explode(self::CONFIG_DELIMITER, (string) $host_id);
         if (count($id_part_list) < 3) {
             array_unshift($id_part_list, $hierarchy_placeholder);
         }
+
+
 
         // add an extra iteration so there is a specific config for a subdomain
         // and a generic one for all subdomains in this toplevel domain
@@ -165,6 +182,7 @@ class File extends AbstractConfig
             $self      = (string)$this->config_path . '/' . (string)$config_del . $file_name;
             ++$i;
         } while ($i < $count);
+
 
         /**
          * Config sort algorithm
@@ -205,7 +223,7 @@ class File extends AbstractConfig
      * @throws ExceptionConfig
      * @throws \Exception
      */
-    public function load($param = null)
+    public function load($param = null) : bool
     {
         // if there already has been a config set it means it already
         // has been loaded so why bother retrying ! this is not a dynamic language !
@@ -233,9 +251,7 @@ class File extends AbstractConfig
                 throw new ExceptionConfig("No default config file declared {$this->config_path}/" . $hierarchy_placeholder . (string)self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION);
             }
 
-            $configParser = new Parser();
-            // first insert point
-            $node = null;
+            // first insert point;
             foreach ($configSet as $config) {
                 /**
                  * get the key for the config node
@@ -243,13 +259,22 @@ class File extends AbstractConfig
                 $key = explode('/', $config);
                 $key = substr(array_pop($key), 0, -4);
 
-                $node = new Node($this->mainNode, $key, $config, 'self');
+                $node = clone $this->nodeTemplate;
+                $node
+                    ->setParent($this->mainNode)
+                    ->setKey($key)
+                    ->setData($config)
+                    ->setComment('self');
+
+
                 $this->lastNewNode = $node;
                 // add the config node
                 $this->mainNode->addChild($node);
-
+                Parser::appendToNode(
+                    $node,
+                    Parser::parse($this->getConfigFileContent($config))
+                );
                 unset($key);
-                $configParser->parse($this->getConfigFileContent($config), $node);
             }
 
         } catch (ExceptionConfig $e) {
@@ -266,7 +291,7 @@ class File extends AbstractConfig
      *
      * @return array|string
      */
-    private function getConfigFileContent($self)
+    private function getConfigFileContent($self) : array
     {
         // if empty just skip it
         if (!filesize($self)) {
