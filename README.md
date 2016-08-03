@@ -19,8 +19,8 @@ if still no host_id is found it will throw an exception.
 ```php
 $config = new File(
     [
-        \chilimatic\lib\Config\File::CONFIG_PATH_INDEX  => __DIR__ . '/test/data',
-        \chilimatic\lib\Config\File::HOST_ID_KEY        => 'www.example.com' 
+        \chilimatic\lib\Config\Adapter\File::CONFIG_PATH_INDEX  => __DIR__ . '/test/data',
+        \chilimatic\lib\Config\Adapter\File::HOST_ID_KEY        => 'www.example.com' 
     ]
 );
 ```
@@ -53,8 +53,8 @@ general the config returns the last appended value to a specific key
 ```php
 $config = new File(
     [
-        \chilimatic\lib\Config\File::CONFIG_PATH_INDEX  => __DIR__ . '/test/data',
-        \chilimatic\lib\Config\File::HOST_ID_KEY        => 'www.example.com' 
+        \chilimatic\lib\Config\Adapter\File::CONFIG_PATH_INDEX  => __DIR__ . '/test/data',
+        \chilimatic\lib\Config\Adapter\File::HOST_ID_KEY        => 'www.example.com' 
     ]
 );
 $config->set('key1', ['some', 'data']);
@@ -80,8 +80,8 @@ The library includes a standard factory pattern that can be accessed static
 \chilimatic\lib\Config\ConfigFactory::make(
     'file',
      [
-             \chilimatic\lib\Config\File::CONFIG_PATH_INDEX  => __DIR__ . '/test/data',
-             \chilimatic\lib\Config\File::HOST_ID_KEY        => 'www.example.com' 
+             \chilimatic\lib\Config\Adapter\File::CONFIG_PATH_INDEX  => __DIR__ . '/test/data',
+             \chilimatic\lib\Config\Adapter\File::HOST_ID_KEY        => 'www.example.com' 
      ]
  ); // returns the same as the example above
 ```
@@ -94,8 +94,8 @@ allows you static access.
 $config = \chilimatic\lib\Config\Config::getInstance(
     'file',
      [
-             \chilimatic\lib\Config\File::CONFIG_PATH_INDEX  => __DIR__ . '/test/data',
-             \chilimatic\lib\Config\File::HOST_ID_KEY        => 'www.example.com' 
+             \chilimatic\lib\Config\Adapter\File::CONFIG_PATH_INDEX  => __DIR__ . '/test/data',
+             \chilimatic\lib\Config\Adapter\File::HOST_ID_KEY        => 'www.example.com' 
      ]
  );
 // also accessable via
@@ -108,9 +108,9 @@ you can have a look at the benchmark.php and the unit tests.
 
 if you just wanna uses ini files you can use the ini adapter
 ```php
-$config = new Ini(
+$config = new \chilimatic\lib\Config\Adapter\Ini(
     [
-         Ini::FILE_INDEX => __DIR__ . '/test/data/'
+         \chilimatic\lib\Config\Adapter\Ini::FILE_INDEX => __DIR__ . '/test/data/'
     ]
 );
 ```
