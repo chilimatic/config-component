@@ -1,4 +1,5 @@
 <?php
+use chilimatic\lib\Config\Adapter\File;
 use chilimatic\lib\Config\Config;
 
 /**
@@ -14,42 +15,16 @@ class ConfigSingelton_Test extends PHPUnit_Framework_TestCase
 {
 
     /**
-     * path to the test data
-     *
      * @var string
      */
-    const TEST_DATA_DIR = '/../testdata/';
+    private static $testDataDir;
 
-    /**
-     * @var chilimatic\lib\Config\AbstractConfig
-     */
-    public $config;
 
-    /**
-     * @var string
-     */
-    private $testDataDir;
-
-    /**
-     * @before
-     */
-    public function createConfigs()
+    public static function setUpBeforeClass()
     {
-        $this->testDataDir = __DIR__ . '/../testdata/';
-        $data = "value1=test\nvalue2=\"test\"\nvalue3='test'\nvalue4=123\nvalue5=12.23\nvalue6={\"test\":123}\nvalue7=a:1:{i:23;i:12;}";
-        file_put_contents($this->testDataDir . '*.cfg', $data);
-        $data2 = "value1=test2\nvalue7=teststring";
-        file_put_contents($this->testDataDir . '*.test.com.cfg', $data2);
+        self::$testDataDir = realpath(__DIR__ . '/../data');
     }
 
-    /**
-     * @after
-     */
-    public function deleteConfigs()
-    {
-        unlink($this->testDataDir . '*.cfg');
-        unlink($this->testDataDir . '*.test.com.cfg');
-    }
 
     /**
      * @test
@@ -58,17 +33,17 @@ class ConfigSingelton_Test extends PHPUnit_Framework_TestCase
      * @expectedExceptionMessage Config Type was not specified in the param array $param['type']
      */
     public function checkMissingTypeException(){
-        $config = Config::getInstance();
+        Config::getInstance();
     }
 
     /**
      * @test
      *
-     * @expectedException chilimatic\lib\Config\ExceptionConfig
-     * @expectedExceptionMessage No config file was give please, the parameter
+     * @expectedException chilimatic\lib\Config\Exception\ExceptionConfig
+     * @expectedExceptionMessage No config file was given, please make sure one is provided in the param array
      */
     public function checkMissingException(){
-        $config = Config::getInstance(
+       Config::getInstance(
             [
                 'type' => 'Ini'
             ]
@@ -82,7 +57,7 @@ class ConfigSingelton_Test extends PHPUnit_Framework_TestCase
         $config = Config::getInstance(
             [
                 'type' => 'File',
-                \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => $this->testDataDir
+                File::CONFIG_PATH_INDEX => self::$testDataDir
             ]
         );
 
@@ -99,7 +74,7 @@ class ConfigSingelton_Test extends PHPUnit_Framework_TestCase
         Config::getInstance(
             [
                 'type' => 'File',
-                \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => $this->testDataDir
+                File::CONFIG_PATH_INDEX => self::$testDataDir
             ]
         );
 
@@ -116,10 +91,10 @@ class ConfigSingelton_Test extends PHPUnit_Framework_TestCase
         Config::getInstance(
             [
                 'type' => 'File',
-                \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => $this->testDataDir
+                File::CONFIG_PATH_INDEX => self::$testDataDir
             ]
         );
 
-        self::assertEquals('test', Config::get('value1'));
+        self::assertEquals('memcached', Config::get('cache_type'));
     }
 }

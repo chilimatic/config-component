@@ -9,12 +9,14 @@
 
 namespace chilimatic\lib\Config;
 
+use chilimatic\lib\Config\Adapter\AbstractConfig;
+use chilimatic\lib\Config\Engine\DataStructure\Node;
 use chilimatic\lib\Interfaces\ISingelton;
 
 /**
  * Class Config
  *
- * @package chilimatic\lib\config
+ * @package chilimatic\lib\Config
  */
 class Config implements ISingelton
 {
@@ -33,7 +35,7 @@ class Config implements ISingelton
     /**
      * Constructor
      *
-     * @return \chilimatic\lib\config\Config
+     * @return \chilimatic\lib\Config\Config
      */
     protected function __construct(){}
 
@@ -71,7 +73,7 @@ class Config implements ISingelton
      *
      * @return mixed
      */
-    public static function get($var)
+    public static function get(string $var)
     {
         return self::$instance->get($var);
     }
@@ -83,7 +85,7 @@ class Config implements ISingelton
      *
      * @return mixed
      */
-    public static function getById($id)
+    public static function getById(string $id)
     {
         return self::$instance->getById($id);
     }
@@ -96,7 +98,7 @@ class Config implements ISingelton
      *
      * @return mixed
      */
-    public static function set($key, $value)
+    public static function set(string $key, $value)
     {
         return self::$instance->set($key, $value);
     }
@@ -106,7 +108,7 @@ class Config implements ISingelton
      *
      * @return mixed
      */
-    public static function delete($key)
+    public static function delete(string $key)
     {
         return self::$instance->delete($key);
     }
@@ -118,7 +120,7 @@ class Config implements ISingelton
      *
      * @return mixed
      */
-    public static function loadModule($module_name = '')
+    public static function loadModule(string $module_name = '')
     {
         return self::$instance->loadModule($module_name);
     }
