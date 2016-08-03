@@ -1,13 +1,18 @@
 <?php
 declare(strict_types=1);
 
-namespace chilimatic\lib\Config;
-use chilimatic\lib\Config\Configfile\Parser;
+namespace chilimatic\lib\Config\Adapter;
+
+use chilimatic\lib\Config\Engine\DataStructure\Node;
+use chilimatic\lib\Config\Exception\ExceptionConfig;
+use chilimatic\lib\Config\IConfig;
+use chilimatic\lib\Config\Parser\ConfigFileParser;
+
 
 /**
  * Class self
  *
- * @package chilimatic\lib\config
+ * @package chilimatic\lib\Config
  */
 class File extends AbstractConfig
 {
@@ -16,8 +21,10 @@ class File extends AbstractConfig
      */
     const CONFIG_PATH_INDEX = 'config_path';
     const HIERARCHY_PLACEHOLDER_INDEX = 'hierarchy_placeholder';
-
     const HOST_ID_KEY = 'host_id';
+
+
+    const HIERARCHY_PLACEHOLDER = '*';
 
     /**
      * extension for config files
@@ -55,7 +62,7 @@ class File extends AbstractConfig
         // add custom parameters
         if (is_array($param)) {
             // set the given parameters
-            foreach ($param as $key => $value) {
+            foreach ((array) $param as $key => $value) {
                 $node = clone $this->nodeTemplate;
                 $node->setKey($key)
                     ->setData($value)
@@ -270,9 +277,9 @@ class File extends AbstractConfig
                 $this->lastNewNode = $node;
                 // add the config node
                 $this->mainNode->addChild($node);
-                Parser::appendToNode(
+                ConfigFileParser::appendToNode(
                     $node,
-                    Parser::parse($this->getConfigFileContent($config))
+                    ConfigFileParser::parse($this->getConfigFileContent($config))
                 );
                 unset($key);
             }

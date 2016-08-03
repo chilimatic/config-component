@@ -1,6 +1,9 @@
 <?php
+declare(strict_types=1);
 
-namespace chilimatic\lib\Config;
+namespace chilimatic\lib\Config\Adapter;
+use chilimatic\lib\Config\Engine\DataStructure\Node;
+use chilimatic\lib\Config\IConfig;
 
 /**
  * Class AbstractConfig
@@ -43,9 +46,9 @@ abstract class AbstractConfig implements IConfig
         $this->mainNode = new Node(null, IConfig::MAIN_NODE_KEY, null);
 
         // add custom parameters
-        if (is_array($param) && count($param)) {
+        if ($param && is_array($param)) {
             // set the given parameters
-            foreach ($param as $key => $value) {
+            foreach ((array) $param as $key => $value) {
                 $node = new Node($this->mainNode, $key, $value, self::INIT_PARAMETER);
                 $this->mainNode->addChild($node);
             }
@@ -98,7 +101,7 @@ abstract class AbstractConfig implements IConfig
             true;
         }
 
-        return $node->delete();
+        return ($node->delete() ? true : false);
     }
 
     /**
@@ -178,12 +181,14 @@ abstract class AbstractConfig implements IConfig
             return $this;
         }
 
-        if (!($node = $this->mainNode->getLastByKey($key))) {
+        $node = $this->mainNode->getLastByKey($key);
+
+        if (!$node || !$node->getParent()) {
             $newNode = new Node($this->mainNode, $key, $val);
             $this->mainNode->addChild($newNode);
         } else {
-            $newNode = new Node($node, $key, $val);
-            $node->addChild($newNode);
+            $newNode = new Node($node->getParent(), $key, $val);
+            $node->getParent()->addChild($newNode);
         }
 
         $this->lastNewNode = $newNode;

@@ -9,12 +9,14 @@
 
 namespace chilimatic\lib\Config;
 
+use chilimatic\lib\Config\Adapter\AbstractConfig;
+use chilimatic\lib\Config\Engine\DataStructure\Node;
 use chilimatic\lib\Interfaces\ISingelton;
 
 /**
  * Class Config
  *
- * @package chilimatic\lib\config
+ * @package chilimatic\lib\Config
  */
 class Config implements ISingelton
 {
@@ -33,7 +35,7 @@ class Config implements ISingelton
     /**
      * Constructor
      *
-     * @return \chilimatic\lib\config\Config
+     * @return \chilimatic\lib\Config\Config
      */
     protected function __construct(){}
 

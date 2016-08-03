@@ -1,10 +1,11 @@
 <?php
-namespace chilimatic\lib\config;
+namespace chilimatic\lib\Config;
+use chilimatic\lib\Config\Engine\DataStructure\Node;
 
 /**
  * Interface Config_Interface
  *
- * @package chilimatic\lib\config
+ * @package chilimatic\lib\Config
  */
 Interface IConfig
 {

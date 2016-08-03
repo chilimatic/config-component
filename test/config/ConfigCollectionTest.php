@@ -1,4 +1,9 @@
 <?php
+
+use chilimatic\lib\Config\Engine\DataStructure\Collection;
+use chilimatic\lib\Config\Engine\DataStructure\Node;
+
+
 /**
  * Created by PhpStorm.
  * User: j
@@ -13,7 +18,7 @@ class ConfigCollectionTest extends PHPUnit_Framework_TestCase {
      * @test
      */
     public function testConfigCollectionInstanceOf() {
-        self::assertInstanceOf('\chilimatic\lib\Config\Collection', new \chilimatic\lib\Config\Collection());
+        self::assertInstanceOf('\chilimatic\lib\Config\Engine\DataStructure\Collection', new Collection());
 
     }
 
@@ -21,15 +26,15 @@ class ConfigCollectionTest extends PHPUnit_Framework_TestCase {
      * @test
      */
     public function testGraphCollectionInstanceOf() {
-        self::assertInstanceOf('\chilimatic\lib\DataStructure\Graph\Collection', new chilimatic\lib\Config\Collection());
+        self::assertInstanceOf('\chilimatic\lib\DataStructure\Graph\Collection', new Collection());
     }
 
     /**
      * @test
      */
     public function testGraphCollectionAddNode() {
-        $collection = new chilimatic\lib\Config\Collection();
-        $collection->addNode(new \chilimatic\lib\Config\Node(null, '', null));
+        $collection = new Collection();
+        $collection->addNode(new Node(null, '', null));
 
         self::assertEquals(1, $collection->count());
     }
@@ -39,8 +44,8 @@ class ConfigCollectionTest extends PHPUnit_Framework_TestCase {
      * @expectedException TypeError
      */
     public function testGraphCollectionAddNodeWithInvalidKeyParam() {
-        $collection = new chilimatic\lib\Config\Collection();
-        $collection->addNode(new \chilimatic\lib\Config\Node(null, null, null));
+        $collection = new Collection();
+        $collection->addNode(new Node(null, null, null));
 
         self::assertEquals(1, $collection->count());
     }
@@ -49,8 +54,8 @@ class ConfigCollectionTest extends PHPUnit_Framework_TestCase {
      * @test
      */
     public function testGraphCollectionAddAndRemoveNode() {
-        $node = new \chilimatic\lib\Config\Node(null, '', null);
-        $collection = new chilimatic\lib\Config\Collection();
+        $node = new Node(null, '', null);
+        $collection = new Collection();
         $collection->addNode($node);
 
         $collection->removeNode($node);
@@ -62,8 +67,8 @@ class ConfigCollectionTest extends PHPUnit_Framework_TestCase {
      * @test
      */
     public function testGraphCollectionAddAndGetSameNode() {
-        $node = new \chilimatic\lib\Config\Node(null, '*', null);
-        $collection = new chilimatic\lib\Config\Collection();
+        $node = new Node(null, '*', null);
+        $collection = new Collection();
         $collection->addNode($node);
 
         $retNode = $collection->getLastByKey('*');
@@ -75,8 +80,8 @@ class ConfigCollectionTest extends PHPUnit_Framework_TestCase {
      * @test
      */
     public function testGraphCollectionAddAndGetObjectStorage() {
-        $node = new \chilimatic\lib\Config\Node(null, '*', null);
-        $collection = new chilimatic\lib\Config\Collection();
+        $node = new Node(null, '*', null);
+        $collection = new Collection();
         $collection->addNode($node);
 
         $retStorage = $collection->getByKey('*');
@@ -89,9 +94,9 @@ class ConfigCollectionTest extends PHPUnit_Framework_TestCase {
      */
     public function testGraphCollectionGetUnambigiosSpecificNode() {
 
-        $node1 = new \chilimatic\lib\Config\Node(null, '*', null);
-        $node2 = new \chilimatic\lib\Config\Node(null, '.', null);
-        $collection = new chilimatic\lib\Config\Collection();
+        $node1 = new Node(null, '*', null);
+        $node2 = new Node(null, '.', null);
+        $collection = new Collection();
         $collection->addNode($node1);
         $collection->addNode($node2);
 
@@ -106,9 +111,9 @@ class ConfigCollectionTest extends PHPUnit_Framework_TestCase {
      */
     public function testGraphCollectionGetAmbigiousSpecificNode() {
 
-        $node1 = new \chilimatic\lib\Config\Node(null, '*', null);
-        $node2 = new \chilimatic\lib\Config\Node(null, '*', null);
-        $collection = new chilimatic\lib\Config\Collection();
+        $node1 = new Node(null, '*', null);
+        $node2 = new Node(null, '*', null);
+        $collection = new Collection();
         $collection->addNode($node1);
         $collection->addNode($node2);
 
@@ -123,11 +128,11 @@ class ConfigCollectionTest extends PHPUnit_Framework_TestCase {
      */
     public function testGraphCollectionGetSpecificUnambigousChildNode() {
 
-        $node1 = new \chilimatic\lib\Config\Node(null, '*', null);
-        $node2 = new \chilimatic\lib\Config\Node(null, '.', null);
+        $node1 = new Node(null, '*', null);
+        $node2 = new Node(null, '.', null);
         $node1->addChild($node2);
 
-        $collection = new chilimatic\lib\Config\Collection($node1->children->idList, $node1->children->keyList);
+        $collection = new Collection($node1->children->idList, $node1->children->keyList);
         $collection->addNode($node1);
         $retNode = $collection->getLastByKey('.');
 

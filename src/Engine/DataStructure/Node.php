@@ -7,7 +7,7 @@
  * Node System like the JSDOM
  */
 
-namespace chilimatic\lib\config;
+namespace chilimatic\lib\Config\Engine\DataStructure;
 
 use chilimatic\lib\Datastructure\Graph\INode;
 use chilimatic\lib\Datastructure\Graph\Node as GraphNode;
@@ -15,7 +15,7 @@ use chilimatic\lib\Datastructure\Graph\Node as GraphNode;
 /**
  * Class Node
  *
- * @package chilimatic\lib\config
+ * @package chilimatic\lib\Config
  */
 class Node extends GraphNode
 {
@@ -26,7 +26,7 @@ class Node extends GraphNode
      *
      * @var mixed
      */
-    protected $comment = '';
+    public $comment = '';
 
     /**
      * constructor

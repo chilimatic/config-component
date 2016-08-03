@@ -1,24 +1,14 @@
 <?php
 declare(strict_types=1);
-/**
- *
- * @author j
- * Date: 2/19/15
- * Time: 12:37 AM
- *
- * File: parser.class.php
- */
-
-
-namespace chilimatic\lib\Config\Configfile;
-use chilimatic\lib\config\Node;
+namespace chilimatic\lib\Config\Parser;
+use chilimatic\lib\Config\Engine\DataStructure\Node;
 
 /**
- * Class Parser
+ * Class ConfigFileParser
  *
- * @package chilimatic\lib\config\configfile
+ * @package chilimatic\lib\Config\Parser
  */
-class Parser
+class ConfigFileParser
 {
 
     /**

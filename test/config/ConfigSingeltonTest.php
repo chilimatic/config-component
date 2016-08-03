@@ -1,4 +1,5 @@
 <?php
+use chilimatic\lib\Config\Adapter\File;
 use chilimatic\lib\Config\Config;
 
 /**
@@ -21,18 +22,9 @@ class ConfigSingelton_Test extends PHPUnit_Framework_TestCase
 
     public static function setUpBeforeClass()
     {
-        self::$testDataDir = __DIR__ ;
-        $data = "value1=test\nvalue2=\"test\"\nvalue3='test'\nvalue4=123\nvalue5=12.23\nvalue6={\"test\":123}\nvalue7=a:1:{i:23;i:12;}";
-        file_put_contents(self::$testDataDir . '/*.cfg', $data);
-        $data2 = "value1=test2\nvalue7=teststring";
-        file_put_contents(self::$testDataDir . '/*.test.com.cfg', $data2);
+        self::$testDataDir = realpath(__DIR__ . '/../data');
     }
 
-    public static function tearDownAfterClass()
-    {
-        unlink(self::$testDataDir . '/*.cfg');
-        unlink(self::$testDataDir . '/*.test.com.cfg');
-    }
 
     /**
      * @test
@@ -47,7 +39,7 @@ class ConfigSingelton_Test extends PHPUnit_Framework_TestCase
     /**
      * @test
      *
-     * @expectedException chilimatic\lib\Config\ExceptionConfig
+     * @expectedException chilimatic\lib\Config\Exception\ExceptionConfig
      * @expectedExceptionMessage No config file was given, please make sure one is provided in the param array
      */
     public function checkMissingException(){
@@ -65,7 +57,7 @@ class ConfigSingelton_Test extends PHPUnit_Framework_TestCase
         $config = Config::getInstance(
             [
                 'type' => 'File',
-                \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => self::$testDataDir
+                File::CONFIG_PATH_INDEX => self::$testDataDir
             ]
         );
 
@@ -82,7 +74,7 @@ class ConfigSingelton_Test extends PHPUnit_Framework_TestCase
         Config::getInstance(
             [
                 'type' => 'File',
-                \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => self::$testDataDir
+                File::CONFIG_PATH_INDEX => self::$testDataDir
             ]
         );
 
@@ -99,10 +91,10 @@ class ConfigSingelton_Test extends PHPUnit_Framework_TestCase
         Config::getInstance(
             [
                 'type' => 'File',
-                \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => self::$testDataDir
+                File::CONFIG_PATH_INDEX => self::$testDataDir
             ]
         );
 
-        self::assertEquals('test', Config::get('value1'));
+        self::assertEquals('memcached', Config::get('cache_type'));
     }
 }

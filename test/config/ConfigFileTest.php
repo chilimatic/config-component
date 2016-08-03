@@ -1,4 +1,7 @@
 <?php
+use chilimatic\lib\Config\Adapter\File;
+use chilimatic\lib\Config\ConfigFactory;
+
 
 /**
  *
@@ -11,7 +14,7 @@
 class ConfigFile_Test extends PHPUnit_Framework_TestCase
 {
     /**
-     * @var chilimatic\lib\Config\AbstractConfig
+     * @var chilimatic\lib\Config\Adapter\AbstractConfig
      */
     public static $config;
 
@@ -23,26 +26,19 @@ class ConfigFile_Test extends PHPUnit_Framework_TestCase
 
     public static function setUpBeforeClass()
     {
+        self::$testDataDir = realpath(__DIR__ . '/../data');
+        try {
+            self::$config = ConfigFactory::make(
+                'File',
+                [
+                    File::CONFIG_PATH_INDEX => self::$testDataDir,
+                    File::HOST_ID_KEY       => 'www.example.com'
+                ]
+            );
+        } catch (\Throwable $t) {
 
-        self::$testDataDir = __DIR__ ;
-        $data = "value1=test\nvalue2=\"test\"\nvalue3='test'\nvalue4=123\nvalue5=12.23\nvalue6={\"test\":123}\nvalue7=a:1:{i:23;i:12;}";
-        file_put_contents(self::$testDataDir . '/*.cfg', $data);
-        $data2 = "value1=test2\nvalue7=teststring";
-        file_put_contents(self::$testDataDir . '/*.test.com.cfg', $data2);
+        }
 
-        self::$config = \chilimatic\lib\Config\ConfigFactory::make('File',
-            [
-                \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => self::$testDataDir,
-                'host_id'                                      => 'www.test.com'
-            ]
-        );
-    }
-
-
-    public static function tearDownAfterClass()
-    {
-        unlink(self::$testDataDir . '/*.cfg');
-        unlink(self::$testDataDir . '/*.test.com.cfg');
     }
 
     /**
@@ -50,15 +46,15 @@ class ConfigFile_Test extends PHPUnit_Framework_TestCase
      */
     public function configFileInstanceTest()
     {
-        self::assertInstanceOf('\chilimatic\lib\Config\File', self::$config);
+        self::assertInstanceOf('\chilimatic\lib\Config\Adapter\File', self::$config);
     }
 
     /**
      * @test
      */
-    public function getHirachicalValue1AsString()
+    public function getHierarchicalValue1AsString()
     {
-        self::assertEquals('test2', self::$config->get('value1'));
+        self::assertEquals('memcached', self::$config->get('cache_type'));
     }
 
     /**

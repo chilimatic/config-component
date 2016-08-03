@@ -6,23 +6,30 @@
  * Time: 12:36
  */
 
-namespace chilimatic\lib\Config;
+namespace chilimatic\lib\Config\Adapter;
+use chilimatic\lib\Config\Engine\DataStructure\Node;
+use chilimatic\lib\Config\Exception\ExceptionConfig;
+use chilimatic\lib\Config\IConfig;
 
 
 /**
  * Class Config_Ini
  *
- * @package chilimatic\lib\config
+ * @package chilimatic\lib\Config
  */
 class Ini extends AbstractConfig
 {
 
+    const FILE_INDEX = 'file';
+    const PROCESS_SECTION_INDEX = 'process-sections';
+    const SCANNER_MODE_INDEX = 'scanner-mode';
+
     /**
      * name of the config file
      *
-     * @var string
+     * @var array
      */
-    public $configFile = '';
+    public $configFileSet = [];
 
     /**
      * scanner mode
@@ -49,19 +56,47 @@ class Ini extends AbstractConfig
     public function load($param = null)
     {
         try {
-            if (empty($param['file'])) {
+            if (empty($param[self::FILE_INDEX])) {
                 throw new ExceptionConfig(_('No config file was given, please make sure one is provided in the param array'), 0, 1, __METHOD__, __LINE__);
             }
-            $this->configFile = (string)$param['file'];
 
-            if (isset($param['process-sections'])) {
-                $this->processSections = (bool)$param['process-sections'];
-            }
-            if (isset($param['scanner-mode'])) {
-                $this->scannerMode = (int)$param['scanner-mode'];
+            if (is_dir($param[self::FILE_INDEX])) {
+                $path = $param[self::FILE_INDEX];
+                $this->configFileSet = array_map(
+                    function($fileName) use ($path){
+                        return $path . DIRECTORY_SEPARATOR . $fileName;
+                    },
+                    array_filter(
+                        scandir($param[self::FILE_INDEX]),
+                        function($file)  {
+                            if (strpos($file, '.ini') !== false) {
+                                return true;
+
+                            }
+                            return false;
+                        }
+                    )
+                );
+            } else {
+                $this->configFileSet[] = $param[self::FILE_INDEX];
             }
 
-            $data = parse_ini_file($this->configFile, $this->processSections, $this->scannerMode);
+
+            if (isset($param[self::PROCESS_SECTION_INDEX])) {
+                $this->processSections = (bool)$param[self::PROCESS_SECTION_INDEX];
+            }
+            if (isset($param[self::SCANNER_MODE_INDEX])) {
+                $this->scannerMode = (int)$param[self::SCANNER_MODE_INDEX];
+            }
+
+            $data = [];
+            if ($this->configFileSet) {
+                foreach($this->configFileSet as $fileName) {
+                    $data = array_merge_recursive(
+                        parse_ini_file($fileName, $this->processSections, $this->scannerMode)
+                    );
+                }
+            }
 
             $this->mainNode = new Node(null, IConfig::MAIN_NODE_KEY, 'main node');
             foreach ($data as $key => $group) {

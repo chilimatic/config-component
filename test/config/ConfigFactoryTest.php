@@ -1,4 +1,6 @@
 <?php
+use chilimatic\lib\Config\Adapter\File;
+use chilimatic\lib\Config\ConfigFactory;
 
 /**
  * Created by PhpStorm.
@@ -8,21 +10,13 @@
  */
 class ConfigFactory_Test extends PHPUnit_Framework_TestCase
 {
+    private static $testDataDir;
+
 
     public static function setUpBeforeClass()
     {
-        touch(__DIR__ . '/*.cfg');
-        touch(__DIR__ . '/*.test.cfg');
-        touch(__DIR__ . '/test.ini');
+        self::$testDataDir = realpath(__DIR__ . '/../data');
     }
-
-    public static function tearDownAfterClass()
-    {
-        unlink(__DIR__ . '/*.cfg');
-        unlink(__DIR__ . '/*.test.cfg');
-        unlink(__DIR__ . '/test.ini');
-    }
-
 
 
     /**
@@ -30,14 +24,15 @@ class ConfigFactory_Test extends PHPUnit_Framework_TestCase
      */
     public function getFileConfig()
     {
-        $c = \chilimatic\lib\Config\ConfigFactory::make(
+
+        $c = ConfigFactory::make(
             'File',
             [
-                \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => __DIR__
+                File::CONFIG_PATH_INDEX => self::$testDataDir
             ]
         );
 
-        self::assertInstanceOf('\chilimatic\lib\Config\File', $c);
+        self::assertInstanceOf('\chilimatic\lib\Config\Adapter\File', $c);
     }
 
     /**
@@ -45,14 +40,14 @@ class ConfigFactory_Test extends PHPUnit_Framework_TestCase
      */
     public function getIniConfig()
     {
-        $c = \chilimatic\lib\Config\ConfigFactory::make(
+        $c = ConfigFactory::make(
             'Ini',
             [
-                'file' => __DIR__ . '/test.ini'
+                'file' => self::$testDataDir . '/*.ini'
             ]
         );
 
-        self::assertInstanceOf('\chilimatic\lib\Config\Ini', $c);
+        self::assertInstanceOf('\chilimatic\lib\Config\Adapter\Ini', $c);
     }
 
     /**
@@ -63,10 +58,10 @@ class ConfigFactory_Test extends PHPUnit_Framework_TestCase
      */
     public function catchLogicExceptionNoType()
     {
-        \chilimatic\lib\Config\ConfigFactory::make(
+        ConfigFactory::make(
             '',
             [
-                \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => __DIR__
+                File::CONFIG_PATH_INDEX => self::$testDataDir
             ]
         );
     }
@@ -78,10 +73,10 @@ class ConfigFactory_Test extends PHPUnit_Framework_TestCase
      */
     public function catchTypeErrorWrongTypeParam()
     {
-        \chilimatic\lib\Config\ConfigFactory::make(
+        ConfigFactory::make(
             null,
             [
-                \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => __DIR__
+                File::CONFIG_PATH_INDEX => self::$testDataDir
             ]
         );
     }
@@ -90,14 +85,14 @@ class ConfigFactory_Test extends PHPUnit_Framework_TestCase
      * @test
      *
      * @expectedException \LogicException
-     * @expectedExceptionMessage The Config class has to be implemented and accessible ... chilimatic\lib\Config\Asfdasfd is not found
+     * @expectedExceptionMessage The Config class has to be implemented and accessible ... chilimatic\lib\Config\Adapter\Asfdasfd is not found
      */
     public function catchLogicExceptionClassDoesNotExist()
     {
-        \chilimatic\lib\Config\ConfigFactory::make(
+        ConfigFactory::make(
             'asfdasfd',
             [
-                \chilimatic\lib\Config\File::CONFIG_PATH_INDEX => __DIR__
+                File::CONFIG_PATH_INDEX => self::$testDataDir
             ]
         );
     }
