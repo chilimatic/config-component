@@ -261,47 +261,38 @@ class File extends AbstractConfig
      *
      * @param null $param
      *
-     * @return bool
+     * @return Node|null
      * @throws ExceptionConfig
-     * @throws \Exception
      */
-    public function load($param = null) : bool
+    public function load($param = null)
     {
         // if there already has been a config set it means it already
         // has been loaded so why bother retrying ! this is not a dynamic language !
-        $configSet = $this->get('config_set');
-        if (count((array) $configSet) > 0) {
-            return true;
+        if (count((array) $this->get('config_set'))) {
+            return null;
         }
-        $hierarchy_placeholder = $this->get(self::HIERARCHY_PLACEHOLDER_INDEX);
 
-
+        $configSet = $this->_getConfigSet();
         // if the config set already exists don't parse it
-        if (empty($configSet) && !($configSet = $this->_getConfigSet())) {
+        if (!$configSet) {
             // set default config set for the default execution
             $configSet = [
-                realpath("{$this->config_path}/" . (string)$hierarchy_placeholder . (string)self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION)
+                realpath("{$this->config_path}/" . (string) $this->get(self::HIERARCHY_PLACEHOLDER_INDEX) . (string) self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION)
             ];
             $this->set('config_set', $configSet);
         }
 
-        /**
-         * create the total config parameter array and merge it recursive
-         */
-        try {
-            if (empty($configSet) || !is_readable($configSet[0])) {
-                throw new ExceptionConfig("No default config file declared {$this->config_path}/" . $hierarchy_placeholder . (string)self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION);
-            }
-
-            $this->populateEngine($configSet);
-
-        } catch (ExceptionConfig $e) {
-            throw $e;
+        if (file_exists($configSet[0])) {
+            throw new ExceptionConfig("No default config file declared {$this->config_path}/" . (string) $this->get(self::HIERARCHY_PLACEHOLDER_INDEX) . (string)self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION);
         }
 
-        return true;
+        return $this->populateEngine($configSet);
     }
 
+    /**
+     * @param $configSet
+     * @return Node|null
+     */
     public function populateEngine($configSet)
     {
         if (!$configSet) {

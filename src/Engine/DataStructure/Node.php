@@ -36,10 +36,9 @@ class Node extends GraphNode
      * @param $data
      * @param string $comment
      */
-    public function __construct(INode $parentNode = null,string $key, $data,string $comment = '')
+    public function __construct(INode $parentNode = null,string $key, $data, string $comment = '')
     {
-
-        if (!$parentNode instanceof \chilimatic\lib\Config\Engine\DataStructure\Node){
+        if ($parentNode && !$parentNode instanceof \chilimatic\lib\Config\Engine\DataStructure\Node){
             throw new ExceptionConfig('The given node is not of the Type \chilimatic\lib\Config\Engine\DataStructure\Node');
         }
 
@@ -63,9 +62,6 @@ class Node extends GraphNode
         $this->comment = $comment;
         $this->initChildren();
     }
-
-
-
 
     /**
      * @param string $comment
