@@ -287,18 +287,21 @@ class File extends AbstractConfig
     }
 
     /**
-     * @param $configSet
+     * @param array $configSet
      * @throws ExceptionConfig
+     * @return array
      */
-    private function checkConfigForDefaultConfig($configSet)
+    private function checkConfigForDefaultConfig(array $configSet) : array
     {
-        if (file_exists($configSet[0])) {
+        if (!file_exists($configSet[0])) {
             throw new ExceptionConfig(
                 "No default config file declared {$this->config_path}/{$this->get(self::HIERARCHY_PLACEHOLDER_INDEX)}"
                 . (string) self::CONFIG_DELIMITER
                 . (string) self::FILE_EXTENSION
             );
         }
+
+        return $configSet;
     }
 
 
