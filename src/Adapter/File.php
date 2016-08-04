@@ -202,7 +202,7 @@ class File extends AbstractConfig
      */
     private function sortConfigSet(array $configSet, string $hierarchy_placeholder) : array
     {
-        if (!$configSet) {
+        if (0 === count($configSet)) {
             return $configSet;
         }
 
@@ -269,7 +269,7 @@ class File extends AbstractConfig
 
         $configSet = $this->_getConfigSet();
 
-        if (!$configSet) {
+        if (0 === count($configSet)) {
             // set default config set for the default execution
             $configSet = [
                 realpath(
@@ -311,7 +311,7 @@ class File extends AbstractConfig
      */
     public function populateEngine(array $configSet)
     {
-        if (!$configSet) {
+        if (0 === count($configSet)) {
             return null;
         }
 
@@ -346,7 +346,6 @@ class File extends AbstractConfig
                     )
                 )
             );
-            unset($key);
         }
 
         return $this->mainNode;
@@ -390,7 +389,7 @@ class File extends AbstractConfig
     public function saveConfig(Node $node = null) : bool
     {
         if (null === $node) {
-            return $this->saveNode($node);
+            return $this->saveNode();
         }
 
         return true;

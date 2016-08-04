@@ -33,9 +33,7 @@ class Config implements ISingelton
     public static $instance = null;
 
     /**
-     * Constructor
-     *
-     * @return \chilimatic\lib\Config\Config
+     * Config constructor.
      */
     protected function __construct(){}
 

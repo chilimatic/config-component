@@ -88,7 +88,7 @@ class Ini extends AbstractConfig
      */
     public function populateEngine(array $data = [])
     {
-        if (!$data) {
+        if (0 === count($data)) {
             return null;
         }
 
@@ -118,7 +118,7 @@ class Ini extends AbstractConfig
      */
     public function parseConfigSet(){
         $data = [];
-        if ($this->configFileSet) {
+        if (0 !== count($this->configFileSet)) {
             foreach($this->configFileSet as $fileName) {
                 $data = array_merge_recursive(
                     parse_ini_file($fileName, $this->processSections, $this->scannerMode)

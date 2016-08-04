@@ -58,6 +58,7 @@ class ConfigFileParser
         $currentComment = '';
 
         $queue = new \SplQueue();
+
         // loop through all lines
         for ($i = 0, $count = (int)count($currentConfig); $i < $count; $i++) {
             if (!$currentConfig[$i]) {
@@ -66,6 +67,7 @@ class ConfigFileParser
                 $currentComment .= $currentConfig[$i];
                 continue;
             }
+            $keyValueMatch = [];
 
             if (strpos($currentConfig[$i], "=") === false) {
                 continue;
@@ -78,7 +80,7 @@ class ConfigFileParser
             );
 
 
-            if ($keyValueMatch) {
+            if (0 !== count($keyValueMatch)) {
                 $queue->enqueue(
                     [
                         self::KEY_SET_INDEX     => $keyValueMatch[1],
@@ -111,7 +113,6 @@ class ConfigFileParser
         switch (true) {
             case (in_array($data, ['true', 'false'], false)):
                 return (bool)(strpos($data, 'true') !== false) ? true : false;
-                break;
             case !is_numeric($data):
                 if ($res = json_decode($data)) {
                     return $res;
@@ -122,7 +123,6 @@ class ConfigFileParser
                 } else {
                     return (string)$data;
                 }
-                break;
         }
 
         if (is_numeric($data) && strpos($data, '.') === false) {
