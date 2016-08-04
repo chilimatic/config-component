@@ -206,5 +206,5 @@ abstract class AbstractConfig implements IConfig
      *
      * @return mixed
      */
-    public abstract function saveConfig(Node $node = null);
+    abstract public function saveConfig(Node $node = null);
 }

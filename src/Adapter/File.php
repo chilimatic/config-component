@@ -82,7 +82,12 @@ class File extends AbstractConfig
         }
 
         $this->_initHostId();
-        $this->load($param);
+
+        if ($param) {
+            $this->load($param);
+        } else {
+            $this->load();
+        }
     }
 
 
@@ -258,31 +263,7 @@ class File extends AbstractConfig
                 throw new ExceptionConfig("No default config file declared {$this->config_path}/" . $hierarchy_placeholder . (string)self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION);
             }
 
-            // first insert point;
-            foreach ($configSet as $config) {
-                /**
-                 * get the key for the config node
-                 */
-                $key = explode('/', $config);
-                $key = substr(array_pop($key), 0, -4);
-
-                $node = clone $this->nodeTemplate;
-                $node
-                    ->setParent($this->mainNode)
-                    ->setKey($key)
-                    ->setData($config)
-                    ->setComment('self');
-
-
-                $this->lastNewNode = $node;
-                // add the config node
-                $this->mainNode->addChild($node);
-                ConfigFileParser::appendToNode(
-                    $node,
-                    ConfigFileParser::parse($this->getConfigFileContent($config))
-                );
-                unset($key);
-            }
+            $this->populateEngine($configSet);
 
         } catch (ExceptionConfig $e) {
             throw $e;
@@ -291,12 +272,52 @@ class File extends AbstractConfig
         return true;
     }
 
+    public function populateEngine($configSet)
+    {
+        if (!$configSet) {
+            return null;
+        }
+
+        // first insert point;
+        foreach ($configSet as $config) {
+            if (!$config || !is_string($config)) {
+                continue;
+            }
+
+            /**
+             * get the key for the config node
+             */
+            $key = explode('/', $config);
+            $key = substr(array_pop($key), 0, -4);
+
+            $node = clone $this->nodeTemplate;
+            $node
+                ->setParent($this->mainNode)
+                ->setKey($key)
+                ->setData($config)
+                ->setComment('self');
+
+
+            $this->lastNewNode = $node;
+            // add the config node
+            $this->mainNode->addChild($node);
+            ConfigFileParser::appendToNode(
+                $node,
+                ConfigFileParser::parse($this->getConfigFileContent($config))
+            );
+            unset($key);
+        }
+
+        return $this->mainNode;
+    }
+
+
     /**
      * reads the specific config file
      *
      * @param $self
      *
-     * @return array|string
+     * @return array
      */
     private function getConfigFileContent($self) : array
     {

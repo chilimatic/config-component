@@ -141,10 +141,7 @@ class Ini extends AbstractConfig
             $iniFileList = array_filter(
                 scandir($path),
                 function($file)  {
-                    if (strpos($file, '.ini') !== false) {
-                        return true;
-                    }
-                    return false;
+                    return strpos($file, '.ini') !== false;
                 }
             );
 
