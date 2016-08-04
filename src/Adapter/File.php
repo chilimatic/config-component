@@ -266,34 +266,47 @@ class File extends AbstractConfig
      */
     public function load($param = null)
     {
-        // if there already has been a config set it means it already
-        // has been loaded so why bother retrying ! this is not a dynamic language !
-        if (count((array) $this->get('config_set'))) {
-            return null;
-        }
 
         $configSet = $this->_getConfigSet();
-        // if the config set already exists don't parse it
+
         if (!$configSet) {
             // set default config set for the default execution
             $configSet = [
-                realpath("{$this->config_path}/" . (string) $this->get(self::HIERARCHY_PLACEHOLDER_INDEX) . (string) self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION)
+                realpath(
+                    "{$this->config_path}/{$this->get(self::HIERARCHY_PLACEHOLDER_INDEX)}"
+                    . (string) self::CONFIG_DELIMITER
+                    . (string) self::FILE_EXTENSION
+                )
             ];
             $this->set('config_set', $configSet);
         }
 
-        if (file_exists($configSet[0])) {
-            throw new ExceptionConfig("No default config file declared {$this->config_path}/" . (string) $this->get(self::HIERARCHY_PLACEHOLDER_INDEX) . (string)self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION);
-        }
-
-        return $this->populateEngine($configSet);
+        return $this->populateEngine(
+            $this->checkConfigForDefaultConfig($configSet)
+        );
     }
 
     /**
      * @param $configSet
+     * @throws ExceptionConfig
+     */
+    private function checkConfigForDefaultConfig($configSet)
+    {
+        if (file_exists($configSet[0])) {
+            throw new ExceptionConfig(
+                "No default config file declared {$this->config_path}/{$this->get(self::HIERARCHY_PLACEHOLDER_INDEX)}"
+                . (string) self::CONFIG_DELIMITER
+                . (string) self::FILE_EXTENSION
+            );
+        }
+    }
+
+
+    /**
+     * @param array $configSet
      * @return Node|null
      */
-    public function populateEngine($configSet)
+    public function populateEngine(array $configSet)
     {
         if (!$configSet) {
             return null;
@@ -324,7 +337,11 @@ class File extends AbstractConfig
             $this->mainNode->addChild($node);
             ConfigFileParser::appendToNode(
                 $node,
-                ConfigFileParser::parse($this->getConfigFileContent($config))
+                ConfigFileParser::parse(
+                    $this->getConfigFileContent(
+                        $config
+                    )
+                )
             );
             unset($key);
         }
@@ -336,25 +353,25 @@ class File extends AbstractConfig
     /**
      * reads the specific config file
      *
-     * @param $self
+     * @param string $configPath
      *
      * @return array
      */
-    private function getConfigFileContent($self) : array
+    private function getConfigFileContent(string $configPath) : array
     {
         // if empty just skip it
-        if (!filesize($self)) {
+        if (!filesize($configPath)) {
             return [];
         }
 
         // read the file handler
-        $config = (string)file_get_contents($self);
+        $config = file_get_contents($configPath);
 
         // check for linebreaks
         if (strpos($config, "\n") === false) {
-            $config = array(
+            $config = [
                 $config
-            );
+            ];
         } else {
             $config = (array) explode("\n", $config);
         }
