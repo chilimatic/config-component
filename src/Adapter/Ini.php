@@ -9,8 +9,6 @@
 namespace chilimatic\lib\Config\Adapter;
 use chilimatic\lib\Config\Engine\DataStructure\Node;
 use chilimatic\lib\Config\Exception\ExceptionConfig;
-use chilimatic\lib\Config\IConfig;
-
 
 /**
  * Class Config_Ini
@@ -57,29 +55,16 @@ class Ini extends AbstractConfig
     {
         try {
             if (empty($param[self::FILE_INDEX])) {
-                throw new ExceptionConfig(_('No config file was given, please make sure one is provided in the param array'), 0, 1, __METHOD__, __LINE__);
-            }
-
-            if (is_dir($param[self::FILE_INDEX])) {
-                $path = $param[self::FILE_INDEX];
-                $this->configFileSet = array_map(
-                    function($fileName) use ($path){
-                        return $path . DIRECTORY_SEPARATOR . $fileName;
-                    },
-                    array_filter(
-                        scandir($param[self::FILE_INDEX]),
-                        function($file)  {
-                            if (strpos($file, '.ini') !== false) {
-                                return true;
-
-                            }
-                            return false;
-                        }
-                    )
+                throw new ExceptionConfig(
+                    _('No config file was given, please make sure one is provided in the param array'),
+                    0,
+                    1,
+                    __METHOD__,
+                    __LINE__
                 );
-            } else {
-                $this->configFileSet[] = $param[self::FILE_INDEX];
             }
+
+            $this->configFileSet = $this->getConfigFileSet($param[self::FILE_INDEX]);
 
 
             if (isset($param[self::PROCESS_SECTION_INDEX])) {
@@ -89,35 +74,90 @@ class Ini extends AbstractConfig
                 $this->scannerMode = (int)$param[self::SCANNER_MODE_INDEX];
             }
 
-            $data = [];
-            if ($this->configFileSet) {
-                foreach($this->configFileSet as $fileName) {
-                    $data = array_merge_recursive(
-                        parse_ini_file($fileName, $this->processSections, $this->scannerMode)
-                    );
-                }
-            }
-
-            $this->mainNode = new Node(null, IConfig::MAIN_NODE_KEY, 'main node');
-            foreach ($data as $key => $group) {
-                if (!is_array($group)) {
-                    $newNode = new Node($this->mainNode, $key, $group);
-                    $this->mainNode->addChild($newNode);
-                    continue;
-                }
-
-                $newNode = new Node($this->mainNode, $key, $key);
-
-                foreach ($group as $name => $value) {
-                    $childNode = new Node($newNode, $name, $value);
-                    $newNode->addChild($childNode);
-                }
-                $this->mainNode->addChild($newNode);
-            }
+            $this->populateEngine(
+                $this->parseConfigSet()
+            );
         } catch (ExceptionConfig $e) {
             throw $e;
         }
     }
+
+    /**
+     * @param array $data
+     * @return Node|void
+     */
+    public function populateEngine(array $data = [])
+    {
+        if (0 === count($data)) {
+            return null;
+        }
+
+        foreach ($data as $key => $group) {
+            if (!is_array($group)) {
+                $newNode = new Node($this->mainNode, $key, $group);
+                $this->mainNode->addChild($newNode);
+                continue;
+            }
+
+            $newNode = new Node($this->mainNode, $key, $key);
+
+            foreach ($group as $name => $value) {
+                $childNode = new Node($newNode, $name, $value);
+                $newNode->addChild($childNode);
+            }
+            $this->mainNode->addChild($newNode);
+        }
+
+        return $this->mainNode;
+    }
+
+
+
+    /**
+     * @return array
+     */
+    public function parseConfigSet(){
+        $data = [];
+        if (0 !== count($this->configFileSet)) {
+            foreach($this->configFileSet as $fileName) {
+                $data = array_merge_recursive(
+                    parse_ini_file($fileName, $this->processSections, $this->scannerMode)
+                );
+            }
+        }
+
+        return $data;
+    }
+
+
+    /**
+     * @param string $path
+     * @return array
+     */
+    public function getConfigFileSet(string $path) : array
+    {
+        $set = [];
+        if (is_dir($path)) {
+            $iniFileList = array_filter(
+                scandir($path),
+                function($file)  {
+                    return strpos($file, '.ini') !== false;
+                }
+            );
+
+            $set = array_map(
+                function($fileName) use ($path){
+                    return $path . DIRECTORY_SEPARATOR . $fileName;
+                },
+                $iniFileList
+            );
+        } else {
+            $set[] = $path;
+        }
+
+        return $set;
+    }
+
 
     /**
      * deletes a config node

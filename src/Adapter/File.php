@@ -82,7 +82,12 @@ class File extends AbstractConfig
         }
 
         $this->_initHostId();
-        $this->load($param);
+
+        if ($param) {
+            $this->load($param);
+        } else {
+            $this->load();
+        }
     }
 
 
@@ -98,13 +103,13 @@ class File extends AbstractConfig
         $node = clone $this->nodeTemplate;
         // if an apache is running use the http host of it
         if (!empty($_SERVER ['HTTP_HOST'])) {
-
             $node->setKey(self::HOST_ID_KEY)->setParent($this->mainNode)->setData($_SERVER ['HTTP_HOST']);
             $this->mainNode->addChild(
                 $node
             );
-        } // else check if there are console parameters
-        else {
+        }
+        else // else check if there are console parameters
+        {
             // split them via spaces
             foreach ($GLOBALS ['argv'] as $param) {
                 if (strpos($param, IConfig::CLI_COMMAND_DELIMITER) === false) {
@@ -122,6 +127,112 @@ class File extends AbstractConfig
             }
             unset($inp, $param);
         }
+
+        $this->checkHostId();
+    }
+
+    /**
+     * @return void
+     */
+    private function checkHostId()
+    {
+        $host_id                = $this->get(self::HOST_ID_KEY);
+        /**
+         * if there's a specific port remove the port
+         *
+         * @todo keep in mind that maybe someone needs a port specific behaviour for his app
+         */
+        if (($pos = strpos((string) $host_id, ':')) !== false) {
+            $node = clone $this->nodeTemplate;
+            $node
+                ->setKey(self::HOST_ID_KEY)
+                ->setParent($this->mainNode)
+                ->setData((string) substr($host_id, 0, $pos));
+        }
+    }
+
+
+    /**
+     * @return array
+     */
+    private function getConfigSet() : array
+    {
+        $configSet            = [];
+        $hierarchy_placeholder  = $this->get(self::HIERARCHY_PLACEHOLDER_INDEX);
+
+        // split up the server host_id to an array
+        $id_part_list = (array) explode(self::CONFIG_DELIMITER, (string) $this->get('host_id'));
+        if (count($id_part_list) < 3) {
+            array_unshift($id_part_list, $hierarchy_placeholder);
+        }
+
+        // we don't need to rebuild this standard strings all the time
+        $config_del = $hierarchy_placeholder . self::CONFIG_DELIMITER;
+        $extension  = self::CONFIG_DELIMITER . self::FILE_EXTENSION;
+
+        // the first config is the current host id + .cfg
+        $self = (string)$this->config_path . '/' . (string) implode(self::CONFIG_DELIMITER, $id_part_list) . (string)$extension;
+
+
+        // add an extra iteration so there is a specific config for a subdomain
+        // and a generic one for all subdomains in this toplevel domain
+        $count = (int)count($id_part_list) + 1;
+        $i     = 0;
+        do {
+            // shift the first position of the array
+            array_shift($id_part_list);
+
+            // if the file exists add it to the "to be parsed list"
+            if ($self && file_exists($self) && !in_array($self, $configSet, false)) {
+                $configSet [] = (string) $self;
+            }
+
+            $file_name = (string)(count($id_part_list) > 0 ? implode(self::CONFIG_DELIMITER, $id_part_list) . (string) $extension : self::FILE_EXTENSION);
+            $self      = (string)$this->config_path . '/' . (string)$config_del . $file_name;
+            ++$i;
+        } while ($i < $count);
+
+        return $configSet;
+    }
+
+    /**
+     * @param array $configSet
+     * @param string $hierarchy_placeholder
+     * @return mixed
+     */
+    private function sortConfigSet(array $configSet, string $hierarchy_placeholder) : array
+    {
+        if (0 === count($configSet)) {
+            return $configSet;
+        }
+
+        /**
+         * Config sort algorithm
+         *
+         * lambda function for sorting
+         *
+         * @param $a string
+         * @param $b string
+         *
+         * @return int
+         */
+        uasort($configSet, function ($fileNameA, $fileNameB) use ($hierarchy_placeholder) {
+            // include to the normal namespace
+
+            if (substr_count($fileNameA, self::CONFIG_DELIMITER) === substr_count($fileNameB, self::CONFIG_DELIMITER)) {
+                if (strpos($fileNameA, $hierarchy_placeholder) !== false && strpos($fileNameB, $hierarchy_placeholder) === false) {
+                    return -1;
+                } elseif (strpos($fileNameA, $hierarchy_placeholder) === false && strpos($fileNameB, $hierarchy_placeholder) !== false) {
+                    return 1;
+                }
+
+                return 0;
+            }
+
+            return (substr_count($fileNameA, self::CONFIG_DELIMITER) > substr_count($fileNameB, self::CONFIG_DELIMITER) ? 1 : -1);
+        });
+
+        return $configSet;
     }
 
     /**
@@ -137,87 +248,11 @@ class File extends AbstractConfig
             return [];
         }
 
-        // default config for all of them
-        $_config_set            = [];
-        $host_id                = $this->get(self::HOST_ID_KEY);
-        $hierarchy_placeholder  = $this->get(self::HIERARCHY_PLACEHOLDER_INDEX);
+        return $this->sortConfigSet(
+            $this->getConfigSet(),
+            $this->get(self::HIERARCHY_PLACEHOLDER_INDEX)
+        );
 
-        /**
-         * if there's a specific port remove the port
-         *
-         * @todo keep in mind that maybe someone needs a port specific behaviour for his app
-         */
-        if (($pos = strpos((string)$host_id, ':')) !== false) {
-            $node = clone $this->nodeTemplate;
-            $node
-                ->setKey(self::HOST_ID_KEY)
-                ->setParent($this->mainNode)
-                ->setData((string) substr($host_id, 0, $pos));
-        }
-
-        // split up the server host_id to an array
-        $id_part_list = (array) explode(self::CONFIG_DELIMITER, (string) $host_id);
-        if (count($id_part_list) < 3) {
-            array_unshift($id_part_list, $hierarchy_placeholder);
-        }
-
-
-
-        // add an extra iteration so there is a specific config for a subdomain
-        // and a generic one for all subdomains in this toplevel domain
-        $count = (int)count($id_part_list) + 1;
-        $i     = 0;
-
-
-        // we don't need to rebuild this standard strings all the time
-        $config_del = $hierarchy_placeholder . ( string )self::CONFIG_DELIMITER;
-        $extension  = self::CONFIG_DELIMITER . self::FILE_EXTENSION;
-
-        // the first config is the current host id + .cfg
-        $self = (string)$this->config_path . '/' . (string)implode(self::CONFIG_DELIMITER, $id_part_list) . (string)$extension;
-
-        do {
-            // shift the first position of the array
-            array_shift($id_part_list);
-
-            // if the file exists add it to the "to be parsed list"
-            if (file_exists($self) && !in_array($self, $_config_set, false)) {
-                $_config_set [] = (string)$self;
-            }
-
-            $file_name = (string)(count($id_part_list) > 0 ? implode(self::CONFIG_DELIMITER, $id_part_list) . (string)$extension : self::FILE_EXTENSION);
-            $self      = (string)$this->config_path . '/' . (string)$config_del . $file_name;
-            ++$i;
-        } while ($i < $count);
-
-
-        /**
-         * Config sort algorithm
-         *
-         * lambda function for sorting
-         *
-         * @param $a string
-         * @param $b string
-         *
-         * @return int
-         */
-        uasort($_config_set, function ($a, $b) use ($hierarchy_placeholder) {
-            // include to the normal namespace
-
-            if (substr_count($a, self::CONFIG_DELIMITER) === substr_count($b, self::CONFIG_DELIMITER)) {
-                if (strpos($a, $hierarchy_placeholder) !== false && strpos($b, $hierarchy_placeholder) === false) {
-                    return -1;
-                } elseif (strpos($a, $hierarchy_placeholder) === false && strpos($b, $hierarchy_placeholder) !== false) {
-                    return 1;
-                }
-
-                return 0;
-            }
-
-            return (substr_count($a, self::CONFIG_DELIMITER) > substr_count($b, self::CONFIG_DELIMITER) ? 1 : -1);
-        });
-
-        return $_config_set;
     }
 
 
@@ -226,93 +261,119 @@ class File extends AbstractConfig
      *
      * @param null $param
      *
-     * @return bool
+     * @return Node|null
      * @throws ExceptionConfig
-     * @throws \Exception
      */
-    public function load($param = null) : bool
+    public function load($param = null)
     {
-        // if there already has been a config set it means it already
-        // has been loaded so why bother retrying ! this is not a dynamic language !
-        $configSet = $this->get('config_set');
-        if (count((array) $configSet) > 0) {
-            return true;
-        }
-        $hierarchy_placeholder = $this->get(self::HIERARCHY_PLACEHOLDER_INDEX);
 
+        $configSet = $this->_getConfigSet();
 
-        // if the config set already exists don't parse it
-        if (empty($configSet) && !($configSet = $this->_getConfigSet())) {
+        if (0 === count($configSet)) {
             // set default config set for the default execution
             $configSet = [
-                realpath("{$this->config_path}/" . (string)$hierarchy_placeholder . (string)self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION)
+                realpath(
+                    "{$this->config_path}/{$this->get(self::HIERARCHY_PLACEHOLDER_INDEX)}"
+                    . (string) self::CONFIG_DELIMITER
+                    . (string) self::FILE_EXTENSION
+                )
             ];
             $this->set('config_set', $configSet);
         }
 
-        /**
-         * create the total config parameter array and merge it recursive
-         */
-        try {
-            if (empty($configSet) || !is_readable($configSet[0])) {
-                throw new ExceptionConfig("No default config file declared {$this->config_path}/" . $hierarchy_placeholder . (string)self::CONFIG_DELIMITER . (string)self::FILE_EXTENSION);
-            }
+        return $this->populateEngine(
+            $this->checkConfigForDefaultConfig($configSet)
+        );
+    }
 
-            // first insert point;
-            foreach ($configSet as $config) {
-                /**
-                 * get the key for the config node
-                 */
-                $key = explode('/', $config);
-                $key = substr(array_pop($key), 0, -4);
-
-                $node = clone $this->nodeTemplate;
-                $node
-                    ->setParent($this->mainNode)
-                    ->setKey($key)
-                    ->setData($config)
-                    ->setComment('self');
-
-
-                $this->lastNewNode = $node;
-                // add the config node
-                $this->mainNode->addChild($node);
-                ConfigFileParser::appendToNode(
-                    $node,
-                    ConfigFileParser::parse($this->getConfigFileContent($config))
-                );
-                unset($key);
-            }
-
-        } catch (ExceptionConfig $e) {
-            throw $e;
+    /**
+     * @param array $configSet
+     * @throws ExceptionConfig
+     * @return array
+     */
+    private function checkConfigForDefaultConfig(array $configSet) : array
+    {
+        if (!file_exists($configSet[0])) {
+            throw new ExceptionConfig(
+                "No default config file declared {$this->config_path}/{$this->get(self::HIERARCHY_PLACEHOLDER_INDEX)}"
+                . (string) self::CONFIG_DELIMITER
+                . (string) self::FILE_EXTENSION
+            );
         }
 
-        return true;
+        return $configSet;
     }
+
+
+    /**
+     * @param array $configSet
+     * @return Node|null
+     */
+    public function populateEngine(array $configSet)
+    {
+        if (0 === count($configSet)) {
+            return null;
+        }
+
+        // first insert point;
+        foreach ($configSet as $config) {
+            if (!$config || !is_string($config)) {
+                continue;
+            }
+
+            /**
+             * get the key for the config node
+             */
+            $key = explode('/', $config);
+            $key = substr(array_pop($key), 0, -4);
+
+            $node = clone $this->nodeTemplate;
+            $node
+                ->setParent($this->mainNode)
+                ->setKey($key)
+                ->setData($config)
+                ->setComment('self');
+
+
+            $this->lastNewNode = $node;
+            // add the config node
+            $this->mainNode->addChild($node);
+            ConfigFileParser::appendToNode(
+                $node,
+                ConfigFileParser::parse(
+                    $this->getConfigFileContent(
+                        $config
+                    )
+                )
+            );
+        }
+
+        return $this->mainNode;
+    }
+
 
     /**
      * reads the specific config file
      *
-     * @param $self
+     * @param string $configPath
      *
-     * @return array|string
+     * @return array
      */
-    private function getConfigFileContent($self) : array
+    private function getConfigFileContent(string $configPath) : array
     {
         // if empty just skip it
-        if (!filesize($self)) {
+        if (!filesize($configPath)) {
             return [];
         }
 
         // read the file handler
-        $config = (string)file_get_contents($self);
+        $config = file_get_contents($configPath);
 
         // check for linebreaks
         if (strpos($config, "\n") === false) {
-            $config = array(
+            $config = [
                 $config
-            );
+            ];
         } else {
             $config = (array) explode("\n", $config);
         }
@@ -328,7 +389,7 @@ class File extends AbstractConfig
     public function saveConfig(Node $node = null) : bool
     {
         if (null === $node) {
-            return $this->saveNode($node);
+            return $this->saveNode();
         }
 
         return true;
